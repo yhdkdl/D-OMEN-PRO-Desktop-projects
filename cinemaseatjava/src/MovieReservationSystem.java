@@ -1,3 +1,4 @@
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -94,12 +95,14 @@ public class MovieReservationSystem {
     static final int TOTAL_SEATS = 50;
 
     public static void main(String[] args) {
+        loadManagersFromFile();
+        loadFromFile();
         Scanner scanner = new Scanner(System.in);
         char repeat = 'y';
 
         while (repeat == 'y' || repeat == 'Y') {
             run(scanner);
-
+saveFile();
             System.out.println("\nDo you want to perform another operation? (y/n): ");
             repeat = scanner.next().charAt(0);
         }
@@ -247,7 +250,7 @@ public class MovieReservationSystem {
 
     Manager newManager = new Manager(username, password);
     managers[managerCount++] = newManager;
-
+  saveManagersToFile(); // Save managers to file after adding a new manager
     System.out.println("Manager added successfully!");
 }
 
@@ -279,6 +282,47 @@ public class MovieReservationSystem {
             System.out.println("Username: " + manager.getUsername() + " | Password: " + manager.getPassword());
         }
     }
+      private static void saveManagersToFile() {
+    try (BufferedWriter writer = new BufferedWriter(new FileWriter("managers.txt"))) {
+        for (int i = 0; i < managerCount; i++) {
+            Manager current = managers[i];
+            writer.write(current.getUsername() + ":" + current.getPassword());
+            writer.newLine();
+        }
+        System.out.println("Managers saved to file successfully.");
+    } catch (IOException e) {
+        System.err.println("Error saving managers file: " + e.getMessage());
+    }
+}
+
+private static void loadManagersFromFile() {
+    File file = new File("managers.txt");
+    if (!file.exists()) {
+        try {
+            file.createNewFile();
+            System.out.println("File 'managers.txt' created successfully.");
+        } catch (IOException e) {
+            System.err.println("Error creating managers file: " + e.getMessage());
+            return;
+        }
+    }
+
+    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+        String line;
+        while ((line = reader.readLine()) != null) {
+            String[] parts = line.split(":");
+            if (parts.length == 2) {
+                String username = parts[0];
+                String password = parts[1];
+                Manager newManager = new Manager(username, password);
+                managers[managerCount++] = newManager;
+            }
+        }
+    } catch (IOException e) {
+        System.err.println("Error reading managers file: " + e.getMessage());
+    }
+}
+
     static void managerMenu(Scanner scanner) {
         int managerChoice = 0; // Initialize managerChoice variable
 
@@ -683,5 +727,101 @@ static boolean isValidTime(String Timetowatch) {
         }
         System.out.println("Movie not found.");
     }
+
+  private static void saveFile() {
+    try (BufferedWriter writer = new BufferedWriter(new FileWriter("movies.txt"))) {
+        for (int i = 0; i < movieCount; i++) {
+            Movie current = movies[i];
+            writer.write("Movie Name:" + current.movieName);
+            writer.newLine();
+            writer.write("Description:" + current.description);
+            writer.newLine();
+            writer.write("Release Date:" + current.releaseDate);
+            writer.newLine();
+            writer.write("Date and Time to watch:" + current.date + " " + current.Time);
+            writer.newLine();
+            writer.write("Genre:" + current.genre);
+            writer.newLine();
+            writer.write("Duration:" + current.duration);
+            writer.newLine();
+
+            int seatCount = 0;
+            for (Seat seat : current.seatList) {
+                if (seatCount % 5 == 0 && seatCount != 0) {
+                    writer.newLine(); // Start a new line after every 5 seats
+                }
+
+                if (seat.seat < 10) {
+                    writer.write("S0" + seat.seat + " :");
+                } else {
+                    writer.write("S" + seat.seat + " :");
+                }
+
+                if (!seat.booked) {
+                    writer.write("|__empty___| ");
+                } else {
+                    writer.write("|____" + seat.customerName + "____| ");
+                }
+
+                seatCount++;
+            }
+
+            writer.newLine(); // Separate movies by a newline
+        }
+        System.out.println("Movies saved to file successfully.");
+    } catch (IOException e) {
+        System.err.println("Error saving file: " + e.getMessage());
+    }
+}
+private static void loadFromFile() {
+    File file = new File("movies.txt");
+    if (!file.exists()) {
+        System.out.println("File 'movies.txt' does not exist.");
+        return;
+    }
+
+    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+        String line;
+        while ((line = reader.readLine()) != null) {
+            if (line.startsWith("Movie Name:")) {
+                String movieName = line.substring(11).trim();
+                String description = reader.readLine().substring(11).trim();
+                String releaseDate = reader.readLine().substring(13).trim();
+                String dateTime = reader.readLine().substring(20).trim();
+                String[] dateTimeParts = dateTime.split(" ");
+                String date = dateTimeParts[0];
+                String time = dateTimeParts[1];
+                String genre = reader.readLine().substring(7).trim();
+                int duration = Integer.parseInt(reader.readLine().substring(9).trim());
+
+                Movie newMovie = new Movie(movieName, description, releaseDate, date, time, genre, duration);
+
+                for (int i = 0; i < TOTAL_SEATS; i++) {
+                    String seatInfo = reader.readLine();
+                    if (seatInfo == null) {
+                        break; // Exit the loop if there are no more lines to read
+                    }
+                    seatInfo = seatInfo.trim();
+                    int seatNumber = Integer.parseInt(seatInfo.substring(1, 3)); // Extract the seat number
+                    boolean booked = seatInfo.contains("______"); // Check if the seat is booked
+                    String customerName = "";
+                    if (booked) {
+                        customerName = seatInfo.substring(seatInfo.indexOf("______") + 4, seatInfo.lastIndexOf("______"));
+                    }
+
+                    newMovie.seatList[i] = new Seat(seatNumber, booked, customerName);
+                }
+
+                movies[movieCount++] = newMovie;
+            }
+        }
+    } catch (IOException e) {
+        System.err.println("Error reading file: " + e.getMessage());
+    }
+}
+
+
+
+
 
     }
