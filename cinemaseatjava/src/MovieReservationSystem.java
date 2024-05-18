@@ -3,21 +3,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-class Admin {
+abstract class Admin {
     private String username;
     private String password;
 
     public Admin(String username, String password) {
-        this.username = username;
-        this.password = password;
-    }
-
-}
-class Manager {
-    private String username;
-    private String password;
-
-    public Manager(String username, String password) {
         this.username = username;
         this.password = password;
     }
@@ -27,21 +17,30 @@ class Manager {
         return this.username;
     }
 
-    // Getter for password (You might not need this, but it's good to have)
+    // Getter for password
     public String getPassword() {
         return this.password;
     }
+}
+
+class Manager extends Admin {
+    public Manager(String username, String password) {
+        super(username, password);
+    }
+    // No need to redefine methods, as they are inherited from Admin
 }
 
 class Seat {
     int seat;
     boolean booked;
     String customerName;
+     int bookingId;
 
     Seat(int seat, boolean booked, String customerName) {
         this.seat = seat;
         this.booked = booked;
         this.customerName = customerName;
+           this.bookingId = -1;
     }
 }
 
@@ -81,7 +80,6 @@ class Movie {
 }
 
 
-
 public class MovieReservationSystem {
     static List<String> feedbackList = new ArrayList<>();
     static Admin[] admins = new Admin[2];
@@ -93,6 +91,7 @@ public class MovieReservationSystem {
     static Movie[] movies = new Movie[100]; // Assuming a maximum of 100 movies
     static int movieCount = 0;
     static final int TOTAL_SEATS = 50;
+     static int nextBookingId = 1;
 
     public static void main(String[] args) {
         loadManagersFromFile();
@@ -102,7 +101,8 @@ public class MovieReservationSystem {
 
         while (repeat == 'y' || repeat == 'Y') {
             run(scanner);
-saveFile();
+            saveFile();
+            saveManagersToFile();
             System.out.println("\nDo you want to perform another operation? (y/n): ");
             repeat = scanner.next().charAt(0);
         }
@@ -111,6 +111,9 @@ saveFile();
     }
 
     static void run(Scanner scanner) {
+    boolean validInput = false;
+
+    while (!validInput) {
         System.out.println("*******************************************************************");
         System.out.println("           MOVIE SEAT RESERVATION SYSTEM");
         System.out.println("*******************************************************************");
@@ -124,6 +127,7 @@ saveFile();
         if (userType == 'a' || userType == 'A') {
             if (adminLogin(scanner)) {
                 adminMenu(scanner);
+                validInput = true; // Set to true to exit the loop
             }
         } else if (userType == 'm' || userType == 'M') {
             System.out.print("Enter your username: ");
@@ -139,15 +143,19 @@ saveFile();
             }
             if (found) {
                 managerMenu(scanner);
+                validInput = true; // Set to true to exit the loop
             } else {
                 System.out.println("Manager not registered or incorrect username/password.");
             }
         } else if (userType == 'c' || userType == 'C') {
             customerMenu(scanner);
+            validInput = true; // Set to true to exit the loop
         } else {
-            System.out.println("Invalid user type. Exiting the program.");
+            System.out.println("Invalid user type. Please enter 'a', 'm', or 'c'.");
+            // Loop continues for invalid input
         }
     }
+}
 
     static boolean adminLogin(Scanner scanner) {
         final String adminUsername = "admin";
@@ -173,16 +181,19 @@ saveFile();
 
     
     static void adminMenu(Scanner scanner) {
-        int adminChoice;
+    int adminChoice;
 
-        do {
-            System.out.println("\nWelcome to Admin Menu");
-            System.out.println("1. Add a new manager");
-            System.out.println("2. Remove a manager");
-            System.out.println("3.  added managers list");
-            System.out.println("4.  view feedback");
-            System.out.println("5. Exit");
-            System.out.println("Enter your choice: ");
+    do {
+        System.out.println("\nWelcome to Admin Menu");
+        System.out.println("1. Add a new manager");
+        System.out.println("2. Remove a manager");
+        System.out.println("3. View added managers list");
+        System.out.println("4. View feedback");
+        System.out.println("5. Exit");
+        System.out.println("Enter your choice: ");
+
+        // Check if the next input is an integer
+        if (scanner.hasNextInt()) {
             adminChoice = scanner.nextInt();
             scanner.nextLine(); // Consume newline character
 
@@ -206,8 +217,13 @@ saveFile();
                     System.out.println("Invalid choice. Please try again.");
                     break;
             }
-        } while (adminChoice != 5);
-    }
+        } else {
+            System.out.println("Invalid input. Please enter a number.");
+            scanner.next(); // Consume the invalid input to prevent an infinite loop
+            adminChoice = -1; // Set adminChoice to an invalid value to ensure the loop continues
+        }
+    } while (adminChoice != 5);
+}
 
   static void addManager(Scanner scanner) {
     String username, password;
@@ -286,10 +302,9 @@ saveFile();
     try (BufferedWriter writer = new BufferedWriter(new FileWriter("managers.txt"))) {
         for (int i = 0; i < managerCount; i++) {
             Manager current = managers[i];
-            writer.write(current.getUsername() + ":" + current.getPassword());
+            writer.write( current.getUsername() + ":" + current.getPassword());
             writer.newLine();
         }
-        System.out.println("Managers saved to file successfully.");
     } catch (IOException e) {
         System.err.println("Error saving managers file: " + e.getMessage());
     }
@@ -326,7 +341,7 @@ private static void loadManagersFromFile() {
     static void managerMenu(Scanner scanner) {
         int managerChoice = 0; // Initialize managerChoice variable
 
-    while (managerChoice != 5) {
+   do {
         System.out.println("\nWelcome to Manager Menu");
         System.out.println("1. Add a new movie");
         System.out.println("2. Delete a movie");
@@ -334,8 +349,9 @@ private static void loadManagersFromFile() {
         System.out.println("4. Display movies added");
         System.out.println("5. Exit");
         System.out.println("Enter your choice: ");
-        managerChoice = scanner.nextInt();
-        scanner.nextLine(); // Consume newline character
+         if (scanner.hasNextInt()) {
+            managerChoice = scanner.nextInt();
+            scanner.nextLine();// Consume newline character
 
         switch (managerChoice) {
             case 1:
@@ -357,7 +373,12 @@ private static void loadManagersFromFile() {
                 System.out.println("Invalid choice. Please try again.");
                 break;
         }
-    }
+         }else {
+            System.out.println("Invalid input. Please enter a number.");
+            scanner.next(); // Consume the invalid input to prevent an infinite loop
+            managerChoice = -1; // Set adminChoice to an invalid value to ensure the loop continues
+         }
+    } while (managerChoice != 5);
 }
     
     static void updateMovieDateTime(Scanner scanner) {
@@ -434,6 +455,7 @@ private static void loadManagersFromFile() {
               System.out.println("6. Send feedback ");
         System.out.println("7. Exit");
             System.out.println("Enter your choice: ");
+            if (scanner.hasNextInt()) {
             customerChoice = scanner.nextInt();
             scanner.nextLine();
 
@@ -442,7 +464,7 @@ private static void loadManagersFromFile() {
                     displayMovies();
                     break;
                 case 2:
-                    bookSeatForMovie(scanner);
+                    bookSeat(scanner);
                     break;
                 case 3:
                     displayAvailableSeats(scanner);
@@ -463,8 +485,13 @@ private static void loadManagersFromFile() {
                 System.out.println("Invalid choice. Please try again.");
                 break;
             }
-        } while (customerChoice != 7);
-    }
+        }else {
+            System.out.println("Invalid input. Please enter a number.");
+            scanner.next(); // Consume the invalid input to prevent an infinite loop
+           customerChoice = -1; // Set adminChoice to an invalid value to ensure the loop continues
+         }
+    } while (customerChoice != 7);
+}
   static void sendFeedback(Scanner scanner) {
         System.out.println("Enter your feedback: ");
         String feedback = scanner.nextLine();
@@ -528,75 +555,84 @@ private static void loadManagersFromFile() {
 }
   
  
-    static void bookSeatForMovie(Scanner scanner) {
-        System.out.println("Enter the name of the movie to book a seat:");
+  
+    static void bookSeat(Scanner scanner) {
+        System.out.print("Enter the name of the movie to book a seat for: ");
         String movieName = scanner.nextLine();
-        Movie current = findMovieByName(movieName);
 
-        if (current == null) {
+        Movie movie = findMovieByName(movieName);
+        if (movie == null) {
             System.out.println("Movie not found.");
             return;
         }
 
-        // Display available seats first
-        displayAvailableSeats(scanner);
-
-        // Ask the customer to enter the seat number
-        System.out.println("Enter the seat number to book:");
-        int seatNumber = scanner.nextInt();
-        scanner.nextLine();
-
-       
-        System.out.println("Enter your name:");
+        System.out.print("Enter your name: ");
         String customerName = scanner.nextLine();
 
-        // Find the seat with the entered seat number
-        Seat seat = current.seatList[seatNumber - 1];
-
-        // Check if the seat exists
-        if (seat == null) {
-            System.out.println("Seat is not found.");
-            return;
-        }
-
-        // Check if the seat is available
-        if (seat.booked) {
-            System.out.println("Seat is already booked.");
-            return;
-        }
-
-        // Update the seat information
-        seat.booked = true;
-        seat.customerName = customerName;
-
-        System.out.println("Seat " + seatNumber + " booked successfully  for " + customerName + "   for the movie: " + movieName);
-    }
-
-    static void cancelSeat(Scanner scanner) {
-        System.out.println("Enter the name of the movie to cancel the seat:");
-        String movieName = scanner.nextLine();
-        Movie current = findMovieByName(movieName);
-
-        if (current == null) {
-            System.out.println("Movie not found.");
-            return;
-        }
-
-        System.out.println("Enter the seat number to cancel:");
+        System.out.print("Enter the seat number to book (1-" + TOTAL_SEATS + "): ");
         int seatNumber = scanner.nextInt();
         scanner.nextLine(); // Consume newline character
 
-        Seat seat = current.seatList[seatNumber - 1];
-
-        if (seat == null || !seat.booked) {
-            System.out.println("Seat is not booked or does not exist.");
+        if (seatNumber < 1 || seatNumber > TOTAL_SEATS) {
+            System.out.println("Invalid seat number. Please enter a number between 1 and " + TOTAL_SEATS + ".");
             return;
         }
 
-        seat.booked = false;
-        seat.customerName = null;
+        Seat seat = movie.seatList[seatNumber - 1];
+        if (seat.booked) {
+            System.out.println("Seat already booked.");
+            return;
+        }
 
-        System.out.println("Seat " + seatNumber + " canceled successfully for the movie: " + movieName);
+        seat.booked = true;
+        seat.customerName = customerName;
+        seat.bookingId = nextBookingId++;
+        System.out.println("Seat booked successfully. Booking ID: " + seat.bookingId);
+    }
+
+    static void cancelSeat(Scanner scanner) {
+        System.out.print("Enter the name of the movie to cancel the seat for: ");
+        String movieName = scanner.nextLine();
+
+        Movie movie = findMovieByName(movieName);
+        if (movie == null) {
+            System.out.println("Movie not found.");
+            return;
+        }
+
+        System.out.print("Enter the seat number to cancel (1-" + TOTAL_SEATS + "): ");
+        int seatNumber = scanner.nextInt();
+        scanner.nextLine(); // Consume newline character
+          System.out.print("Enter your booking ID to cancel the seat: ");
+            int bookingId = scanner.nextInt();
+    scanner.nextLine(); // Consume newline character
+
+        if (seatNumber < 1 || seatNumber > TOTAL_SEATS) {
+            System.out.println("Invalid seat number. Please enter a number between 1 and " + TOTAL_SEATS + ".");
+            return;
+        }
+
+         Seat targetSeat = movie.seatList[seatNumber - 1];
+    if (!targetSeat.booked) {
+        System.out.println("Seat is not booked.");
+        return;
+    }
+
+        boolean seatCancelled = false;
+          for (Seat seat : movie.seatList) {
+        if (seat.bookingId == bookingId) {
+            seat.booked = false;
+            seat.customerName = null;
+            seat.bookingId = -1;
+            System.out.println("Seat booking cancelled successfully.");
+            seatCancelled = true;
+            break;
+        }
+    }
+
+    if (!seatCancelled) {
+        System.out.println("ID incorrect, try again.");
+    }
     }
 
  static void addMovie(Scanner scanner) {
@@ -768,7 +804,6 @@ static boolean isValidTime(String Timetowatch) {
 
             writer.newLine(); // Separate movies by a newline
         }
-        System.out.println("Movies saved to file successfully.");
     } catch (IOException e) {
         System.err.println("Error saving file: " + e.getMessage());
     }
@@ -819,9 +854,4 @@ private static void loadFromFile() {
         System.err.println("Error reading file: " + e.getMessage());
     }
 }
-
-
-
-
-
     }
