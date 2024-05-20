@@ -4,20 +4,18 @@ import java.util.List;
 import java.util.Scanner;
 
 abstract class Admin {
-    private String username;
-    private String password;
+    private final String username;
+    private final String password;
 
     public Admin(String username, String password) {
         this.username = username;
         this.password = password;
     }
 
-    // Getter for username
     public String getUsername() {
         return this.username;
     }
 
-    // Getter for password
     public String getPassword() {
         return this.password;
     }
@@ -27,20 +25,19 @@ class Manager extends Admin {
     public Manager(String username, String password) {
         super(username, password);
     }
-    // No need to redefine methods, as they are inherited from Admin
 }
 
 class Seat {
     int seat;
     boolean booked;
     String customerName;
-     int bookingId;
+    int bookingId;
 
     Seat(int seat, boolean booked, String customerName) {
         this.seat = seat;
         this.booked = booked;
         this.customerName = customerName;
-           this.bookingId = -1;
+        this.bookingId = -1;
     }
 }
 
@@ -65,7 +62,7 @@ class Movie {
         this.Time = Time;
         this.genre = genre;
         this.duration = duration;
-        this.seatList = new Seat[50]; // Assuming a maximum of 50 seats
+        this.seatList = new Seat[50];
         initializeSeats();
         this.updated = false;
         this.previousDate = date;
@@ -79,23 +76,23 @@ class Movie {
     }
 }
 
-
 public class MovieReservationSystem {
     static List<String> feedbackList = new ArrayList<>();
     static Admin[] admins = new Admin[2];
     static int adminCount = 0;
 
-    static Manager[] managers = new Manager[10]; // Assuming a maximum of 10 managers
+    static Manager[] managers = new Manager[10];
     static int managerCount = 0;
 
-    static Movie[] movies = new Movie[100]; // Assuming a maximum of 100 movies
+    static Movie[] movies = new Movie[100];
     static int movieCount = 0;
     static final int TOTAL_SEATS = 50;
-     static int nextBookingId = 1;
+    static int nextBookingId = 1;
 
     public static void main(String[] args) {
         loadManagersFromFile();
         loadFromFile();
+        initializeAdmins(); // Initialize admin accounts
         Scanner scanner = new Scanner(System.in);
         char repeat = 'y';
 
@@ -111,72 +108,74 @@ public class MovieReservationSystem {
     }
 
     static void run(Scanner scanner) {
-    boolean validInput = false;
+        boolean validInput = false;
 
-    while (!validInput) {
-        System.out.println("*******************************************************************");
-        System.out.println("           MOVIE SEAT RESERVATION SYSTEM");
-        System.out.println("*******************************************************************");
-        System.out.println("Please choose the selection to proceed:");
-        System.out.println("Are you an admin (a)");
-        System.out.println("Are you a manager (m)");
-        System.out.println("Are you a customer (c)");
-        System.out.println("Input [A/M/C]: ");
-        char userType = scanner.next().charAt(0);
+        while (!validInput) {
+            System.out.println("*******************************************************************");
+            System.out.println("           MOVIE SEAT RESERVATION SYSTEM");
+            System.out.println("*******************************************************************");
+            System.out.println("Please choose the selection to proceed:");
+            System.out.println("Are you an admin (a)");
+            System.out.println("Are you a manager (m)");
+            System.out.println("Are you a customer (c)");
+            System.out.println("Input [A/M/C]: ");
+            char userType = scanner.next().charAt(0);
 
-        if (userType == 'a' || userType == 'A') {
-            if (adminLogin(scanner)) {
-                adminMenu(scanner);
-                validInput = true; // Set to true to exit the loop
-            }
-        } else if (userType == 'm' || userType == 'M') {
-            System.out.print("Enter your username: ");
-            String username = scanner.next();
-            System.out.print("Enter your password: ");
-            String password = scanner.next();
-            boolean found = false;
-            for (Manager manager : managers) {
-                if (manager != null && manager.getUsername().equals(username) && manager.getPassword().equals(password)) {
-                    found = true;
-                    break;
+            if (userType == 'a' || userType == 'A') {
+                if (adminLogin(scanner)) {
+                    adminMenu(scanner);
+                    validInput = true;
                 }
-            }
-            if (found) {
-                managerMenu(scanner);
-                validInput = true; // Set to true to exit the loop
+            } else if (userType == 'm' || userType == 'M') {
+                System.out.print("Enter your username: ");
+                String username = scanner.next();
+                System.out.print("Enter your password: ");
+                String password = scanner.next();
+                boolean found = false;
+                for (Manager manager : managers) {
+                    if (manager != null && manager.getUsername().equals(username) && manager.getPassword().equals(password)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) {
+                    managerMenu(scanner);
+                    validInput = true;
+                } else {
+                    System.out.println("Manager not registered or incorrect username/password.");
+                }
+            } else if (userType == 'c' || userType == 'C') {
+                customerMenu(scanner);
+                validInput = true;
             } else {
-                System.out.println("Manager not registered or incorrect username/password.");
+                System.out.println("Invalid user type. Please enter 'a', 'm', or 'c'.");
             }
-        } else if (userType == 'c' || userType == 'C') {
-            customerMenu(scanner);
-            validInput = true; // Set to true to exit the loop
-        } else {
-            System.out.println("Invalid user type. Please enter 'a', 'm', or 'c'.");
-            // Loop continues for invalid input
         }
     }
-}
 
     static boolean adminLogin(Scanner scanner) {
-        final String adminUsername = "admin";
-        final String adminPassword = "adminpassword";
-        String username, password;
-
         System.out.println("Admin Login");
 
         System.out.print("Username: ");
-        username = scanner.next();
+        String username = scanner.next();
 
         System.out.print("Password: ");
-        password = scanner.next();
+        String password = scanner.next();
 
-        if (username.equals(adminUsername) && password.equals(adminPassword)) {
-            System.out.println("Login successful!");
-            return true;
-        } else {
-            System.out.println("Incorrect username or password.");
-            return false;
+        for (Admin admin : admins) {
+            if (admin != null && admin.getUsername().equals(username) && admin.getPassword().equals(password)) {
+                System.out.println("Login successful!");
+                return true;
+            }
         }
+        System.out.println("Incorrect username or password.");
+        return false;
+    }
+
+    static void initializeAdmins() {
+        // Adding some default admin users
+        admins[adminCount++] = new Admin("admin1", "password1") {};
+        admins[adminCount++] = new Admin("admin2", "password2") {};
     }
 
     
