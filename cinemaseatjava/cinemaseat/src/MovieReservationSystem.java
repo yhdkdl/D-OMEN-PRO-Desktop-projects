@@ -107,51 +107,75 @@ public class MovieReservationSystem {
         System.out.println("Thank you for using the Movie Reservation System!");
     }
 
-    static void run(Scanner scanner) {
-        boolean validInput = false;
+  static void run(Scanner scanner) {
+    boolean validInput = false;
 
-        while (!validInput) {
-            System.out.println("*******************************************************************");
-            System.out.println("           MOVIE SEAT RESERVATION SYSTEM");
-            System.out.println("*******************************************************************");
-            System.out.println("Please choose the selection to proceed:");
-            System.out.println("Are you an admin (a)");
-            System.out.println("Are you a manager (m)");
-            System.out.println("Are you a customer (c)");
-            System.out.println("Input [A/M/C]: ");
-            char userType = scanner.next().charAt(0);
+    while (!validInput) {
+        System.out.println("*******************************************************************");
+        System.out.println("           MOVIE SEAT RESERVATION SYSTEM");
+        System.out.println("*******************************************************************");
+        System.out.println("Please choose the selection to proceed:");
+        System.out.println("Are you an admin (a)");
+        System.out.println("Are you a manager (m)");
+        System.out.println("Are you a customer (c)");
+        System.out.println("View About Us (u)");
+        System.out.println("Input [A/M/C/U]: ");
+        char userType = scanner.next().charAt(0);
 
-            if (userType == 'a' || userType == 'A') {
-                if (adminLogin(scanner)) {
-                    adminMenu(scanner);
-                    validInput = true;
+        if (userType == 'a' || userType == 'A') {
+            if (adminLogin(scanner)) {
+                adminMenu(scanner);
+                validInput = true;
+            }
+        } else if (userType == 'm' || userType == 'M') {
+            System.out.print("Enter your username: ");
+            String username = scanner.next();
+            System.out.print("Enter your password: ");
+            String password = scanner.next();
+            boolean found = false;
+            for (Manager manager : managers) {
+                if (manager != null && manager.getUsername().equals(username) && manager.getPassword().equals(password)) {
+                    found = true;
+                    break;
                 }
-            } else if (userType == 'm' || userType == 'M') {
-                System.out.print("Enter your username: ");
-                String username = scanner.next();
-                System.out.print("Enter your password: ");
-                String password = scanner.next();
-                boolean found = false;
-                for (Manager manager : managers) {
-                    if (manager != null && manager.getUsername().equals(username) && manager.getPassword().equals(password)) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (found) {
-                    managerMenu(scanner);
-                    validInput = true;
-                } else {
-                    System.out.println("Manager not registered or incorrect username/password.");
-                }
-            } else if (userType == 'c' || userType == 'C') {
-                customerMenu(scanner);
+            }
+            if (found) {
+                managerMenu(scanner);
                 validInput = true;
             } else {
-                System.out.println("Invalid user type. Please enter 'a', 'm', or 'c'.");
+                System.out.println("Manager not registered or incorrect username/password.");
             }
+        } else if (userType == 'c' || userType == 'C') {
+            customerMenu(scanner);
+            validInput = true;
+        } else if (userType == 'u' || userType == 'U') {
+            displayAboutUs();
+            validInput = true;
+        } else {
+            System.out.println("Invalid user type. Please enter 'a', 'm', 'c', or 'u'.");
         }
     }
+}
+
+static void displayAboutUs() {
+    System.out.println("*******************************************************************");
+    System.out.println("                              ABOUT US");
+    System.out.println("*******************************************************************");
+    System.out.println("Welcome to the Movie Seat Reservation System, your go-to platform for securing the best seats for your favorite movies hassle-free. Our system empowers movie enthusiasts like you to browse through a vast selection of movies, theaters, and showtimes, enabling you to reserve seats with ease and convenience.");
+    System.out.println("\nOur Vision:");
+    System.out.println("To redefine the moviegoing experience by providing a seamless reservation system that puts you in control of your entertainment choices.");
+    System.out.println("\nOur Mission:");
+    System.out.println("1. To offer a user-friendly platform that simplifies the process of reserving movie seats.");
+    System.out.println("2. To ensure customer satisfaction by providing accurate information and reliable booking services.");
+    System.out.println("3. To foster a community of movie lovers by offering a diverse range of movies and theaters.");
+    System.out.println("4. To continually innovate and enhance our system to meet the evolving needs of our users.");
+    System.out.println("\nWhy Choose Us?");
+    System.out.println("1. Easy booking process: Our system is designed to be intuitive and straightforward, allowing you to reserve seats in just a few clicks.");
+    System.out.println("2. Extensive movie selection: We partner with various theaters to offer a wide range of movies across different genres, ensuring there's something for everyone.");
+    System.out.println("3. Real-time availability: Our system provides up-to-date information on seat availability and showtimes, giving you peace of mind when making reservations.");
+    System.out.println("4. Secure and reliable: We prioritize the security of your personal information and payment details, ensuring a safe and trustworthy booking experience.");
+    System.out.println("*******************************************************************");
+}
 
     static boolean adminLogin(Scanner scanner) {
         System.out.println("Admin Login");
@@ -773,7 +797,9 @@ static boolean isValidTime(String Timetowatch) {
             writer.newLine();
             writer.write("Release Date:" + current.releaseDate);
             writer.newLine();
-            writer.write("Date and Time to watch:" + current.date + " " + current.Time);
+            writer.write("Date to watch:" + current.date );
+            writer.newLine();
+             writer.write("Time to watch:" + current.Time);
             writer.newLine();
             writer.write("Genre:" + current.genre);
             writer.newLine();
@@ -819,12 +845,10 @@ private static void loadFromFile() {
         while ((line = reader.readLine()) != null) {
             if (line.startsWith("Movie Name:")) {
                 String movieName = line.substring(11).trim();
-                String description = reader.readLine().substring(11).trim();
-                String releaseDate = reader.readLine().substring(13).trim();
-                String dateTime = reader.readLine().substring(20).trim();
-                String[] dateTimeParts = dateTime.split(" ");
-                String date = dateTimeParts[0];
-                String time = dateTimeParts[1];
+                String description = reader.readLine().substring(12).trim();
+                String releaseDate = reader.readLine().substring(14).trim();
+                String date = reader.readLine().substring(14).trim();
+                String time = reader.readLine().substring(14).trim();
                 String genre = reader.readLine().substring(7).trim();
                 int duration = Integer.parseInt(reader.readLine().substring(9).trim());
 
